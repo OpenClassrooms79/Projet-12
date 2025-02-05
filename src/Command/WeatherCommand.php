@@ -41,6 +41,7 @@ class WeatherCommand extends Command
         $post_code = $input->getArgument('code_postal');
         $country_code = $input->getArgument('code_pays');
 
+        // TODO vérifier si les infos ne sont pas déjà en cache
         try {
             $geo_result = json_decode(
                 file_get_contents(
@@ -68,12 +69,12 @@ class WeatherCommand extends Command
             $weather_result = json_decode(
                 file_get_contents(
                     $this->translator->trans(
-                        $_ENV['OPENWEATHERMAP_FORECAST_URL'],
+                        $_ENV['OPENWEATHERMAP_URL'],
                         [
                             '{API_KEY}' => $_ENV['OPENWEATHERMAP_API_KEY'],
                             '{LATITUDE}' => $geo_result['lat'],
                             '{LONGITUDE}' => $geo_result['lon'],
-                            '{LANGUAGE_CODE}' => 'fr',
+                            '{LANGUAGE_CODE}' => $country_code,
                         ],
                     ),
                 ),
@@ -89,6 +90,7 @@ class WeatherCommand extends Command
         print_r($weather_result);
 
         //$output->writeln($weather_result);
+        // TODO mettre en cache les résultats
 
         $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
 
