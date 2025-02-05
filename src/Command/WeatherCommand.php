@@ -2,6 +2,9 @@
 
 namespace App\Command;
 
+use App\Entity\Geo;
+use App\Repository\GeoRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -12,6 +15,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function file_get_contents;
+use function flush;
 use function json_decode;
 use function print_r;
 
@@ -23,7 +27,7 @@ use const JSON_THROW_ON_ERROR;
 )]
 class WeatherCommand extends Command
 {
-    public function __construct(private TranslatorInterface $translator)
+    public function __construct(private readonly TranslatorInterface $translator, private GeoRepository $geoRepository, private EntityManagerInterface $entityManager)
     {
         parent::__construct();
     }
@@ -41,28 +45,45 @@ class WeatherCommand extends Command
         $post_code = $input->getArgument('code_postal');
         $country_code = $input->getArgument('code_pays');
 
-        // TODO vérifier si les infos ne sont pas déjà en cache
-        try {
-            $geo_result = json_decode(
-                file_get_contents(
-                    $this->translator->trans(
-                        $_ENV['OPENWEATHERMAP_GEO_URL'],
-                        [
-                            '{API_KEY}' => $_ENV['OPENWEATHERMAP_API_KEY'],
-                            '{POST_CODE}' => $post_code,
-                            '{COUNTRY_CODE}' => $country_code,
-                        ],
+        // vérifier si les infos ne sont pas déjà en cache
+        $geo = $this->geoRepository->findOneBy(['postCode' => $post_code, 'countryCode' => $country_code]);
+        if ($geo !== null) {
+            $geo_result = [
+                'lat' => $geo->getLatitude(),
+                'lon' => $geo->getLongitude(),
+            ];
+        } else {
+            try {
+                $geo_result = json_decode(
+                    file_get_contents(
+                        $this->translator->trans(
+                            $_ENV['OPENWEATHERMAP_GEO_URL'],
+                            [
+                                '{API_KEY}' => $_ENV['OPENWEATHERMAP_API_KEY'],
+                                '{POST_CODE}' => $post_code,
+                                '{COUNTRY_CODE}' => $country_code,
+                            ],
+                        ),
                     ),
-                ),
-                true,
-                512,
-                JSON_THROW_ON_ERROR,
-            );
-        } catch (\Exception $e) {
-            $io->error($e->getMessage());
-            return Command::FAILURE;
-        }
+                    true,
+                    512,
+                    JSON_THROW_ON_ERROR,
+                );
+            } catch (\Exception $e) {
+                $io->error($e->getMessage());
+                return Command::FAILURE;
+            }
 
+            // mettre en cache les infos
+            $geo = new Geo();
+            $geo->setPostCode($post_code);
+            $geo->setCountryCode($country_code);
+            $geo->setName($geo_result['name']);
+            $geo->setLatitude($geo_result['lat']);
+            $geo->setLongitude($geo_result['lon']);
+            $this->entityManager->persist($geo);
+            $this->entityManager->flush();
+        }
         print_r($geo_result);
 
         try {
