@@ -57,7 +57,7 @@ class WeatherCommand extends Command
                 $geo_result = json_decode(
                     file_get_contents(
                         $this->translator->trans(
-                            $_ENV['OPENWEATHERMAP_GEO_URL'],
+                            $_ENV['GEO_COORDINATES_URL'],
                             [
                                 '{API_KEY}' => $_ENV['OPENWEATHERMAP_API_KEY'],
                                 '{POST_CODE}' => $post_code,
@@ -90,7 +90,7 @@ class WeatherCommand extends Command
             $weather_result = json_decode(
                 file_get_contents(
                     $this->translator->trans(
-                        $_ENV['OPENWEATHERMAP_URL'],
+                        $_ENV['CURRENT_WEATHER_URL'],
                         [
                             '{API_KEY}' => $_ENV['OPENWEATHERMAP_API_KEY'],
                             '{LATITUDE}' => $geo_result['lat'],
