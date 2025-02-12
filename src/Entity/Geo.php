@@ -18,9 +18,6 @@ class Geo
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $postCode = null;
-
-    #[ORM\Column(length: 255)]
     private ?string $name = null;
 
     #[ORM\Column]
@@ -46,18 +43,6 @@ class Geo
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getPostCode(): ?string
-    {
-        return $this->postCode;
-    }
-
-    public function setPostCode(string $postCode): static
-    {
-        $this->postCode = $postCode;
-
-        return $this;
     }
 
     public function getName(): ?string
