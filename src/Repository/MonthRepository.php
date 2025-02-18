@@ -40,4 +40,15 @@ class MonthRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+
+    /**
+     * retourne une instance de Month qui a comme num $num
+     *
+     * @param int $num
+     * @return Month|null
+     */
+    public function getMonthByNum(int $num): ?Month
+    {
+        return $this->findOneBy(['num' => $num]);
+    }
 }

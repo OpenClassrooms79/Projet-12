@@ -22,25 +22,15 @@ use function sprintf;
 final class AdviceController extends AbstractController
 {
     // liste tous les conseils du mois en cours
-    #[Route('/api/conseil', name: 'advice_index', methods: ['GET'])]
-    public function index(AdviceRepository $adviceRepository, MonthRepository $monthRepository): Response
+    #[Route('/api/conseil', name: 'advice_current_month', methods: ['GET'])]
+    public function index(AdviceRepository $adviceRepository): Response
     {
-        $currentMonth = $monthRepository->findOneBy(['num' => (int) date('n')]);
-
-        $advices = $adviceRepository
-            ->createQueryBuilder('a')
-            ->innerJoin('a.months', 'm')
-            ->where('m = :month')
-            ->setParameter('month', $currentMonth)
-            ->getQuery()
-            ->getResult();
-
-        return $this->json([$advices]);
+        return $this->json($this->getAdvicesByMonth((int) date('n'), $adviceRepository));
     }
 
-    // affiche tous les conseils du mois donné
-    #[Route('/api/conseil/{month}', name: 'advice_show', requirements: ['month' => Requirement::POSITIVE_INT], methods: ['GET'])]
-    public function show(int $month, AdviceRepository $adviceRepository, MonthRepository $monthRepository): Response
+    // liste tous les conseils du mois donné
+    #[Route('/api/conseil/{month}', name: 'advice_specific_month', requirements: ['month' => Requirement::POSITIVE_INT], methods: ['GET'])]
+    public function index2(int $month, AdviceRepository $adviceRepository): Response
     {
         if ($month < 1 || $month > 12) {
             return $this->json([
@@ -49,32 +39,35 @@ final class AdviceController extends AbstractController
             ], 404);
         }
 
-        $currentMonth = $monthRepository->findOneBy(['num' => $month]);
+        return $this->json($this->getAdvicesByMonth($month, $adviceRepository));
+    }
 
-        $advices = $adviceRepository
+    protected function getAdvicesByMonth(int $month, AdviceRepository $adviceRepository): array
+    {
+        return $adviceRepository
             ->createQueryBuilder('a')
+            ->select('a.id', 'a.detail', 'm.name')
             ->innerJoin('a.months', 'm')
-            ->where('m = :month')
-            ->setParameter('month', $currentMonth)
+            ->where('m.num = :num')
+            ->setParameter('num', $month)
             ->getQuery()
             ->getResult();
-
-        return $this->json([$advices]);
     }
 
     // ajoute un nouveau conseil pour le(s) mois(s) donné(s) (séparés par une virgule)
     #[Route('/api/conseil/{months}/{detail}', name: 'advice_add', methods: ['POST'])]
-    public function create(string $months, string $detail, EntityManagerInterface $entityManager): Response
+    public function create(string $months, string $detail, EntityManagerInterface $entityManager, MonthRepository $monthRepository): Response
     {
         $months_array = explode(',', $months);
-        $months_array = array_filter($months_array, static function ($month) {
-            return $month >= 1 && $month <= 12;
+        $months_array = array_filter($months_array, static function ($num) {
+            return $num >= 1 && $num <= 12;
         });
 
-        foreach ($months_array as $month) {
+        foreach ($months_array as $num) {
+            $month = $monthRepository->getMonthByNum((int) $num);
             $advice = new Advice();
             $advice
-                ->setMonth($month)
+                ->addMonth($month)
                 ->setDetail($detail);
             $entityManager->persist($advice);
         }
@@ -86,44 +79,47 @@ final class AdviceController extends AbstractController
         ]);
     }
 
-    // met à jour le conseil $id
+    // met à jour la liste des mois du conseil $id, et éventuellement le détail
     #[Route('/api/conseil/{id}/{months}', name: 'advice_update', methods: ['PUT'])]
     #[Route('/api/conseil/{id}/{months}/{detail}', name: 'advice_update2', methods: ['PUT'])]
-    public function update(EntityManagerInterface $entityManager, AdviceRepository $adviceRepository, string $months, ?string $detail = null): Response
+    public function update(EntityManagerInterface $entityManager, AdviceRepository $adviceRepository, MonthRepository $monthRepository, int $id, string $months, ?string $detail = null): Response
     {
         $months_array = explode(',', $months);
         $months_array = array_filter($months_array, static function ($month) {
             return $month >= 1 && $month <= 12;
         });
 
-        $queryBuilder = $entityManager->getRepository(Advice::class)->createQueryBuilder('a');
-        if ($detail === null) {
-            // mise à jour uniquement de la liste des mois
-            $queryBuilder
-                ->update()
-                ->set('a.months', ':months')
-                ->where('a.id = :id')
-                ->setParameter('months', $months_array)
-                ->setParameter('id', 1)
-                ->getQuery()
-                ->execute();
-        } else {
-            // mise à jour de la liste des mois et du detail
-            $queryBuilder
-                ->update()
-                ->set('a.months', ':months')
-                ->set('a.detail', ':detail')
-                ->where('a.id = :id')
-                ->setParameter('months', $months_array)
-                ->setParameter('detail', $detail)
-                ->setParameter('id', 1)
-                ->getQuery()
-                ->execute();
+        $advice = $adviceRepository->find($id);
+        if ($advice === null) {
+            return $this->json([
+                'code' => 404,
+                'message' => 'Conseil non trouvé',
+            ]);
         }
+
+        // suppression de tous les mois auxquels le conseil est actuellement associé
+        $advice->getMonths()->clear();
+
+        // ajout des nouveaux mois au conseil
+        $count = 0;
+        foreach ($months_array as $num) {
+            $month = $monthRepository->find($num);
+            if ($month !== null) {
+                $advice->addMonth($month);
+                $count++;
+            }
+        }
+
+        // mise à jour du détail (si fourni dans la requête)
+        if ($detail !== null) {
+            $advice->setDetail($detail);
+        }
+
+        $entityManager->flush();
 
         return $this->json([
             'code' => 200,
-            'message' => sprintf('Conseils ajoutés : %d', count($months_array)),
+            'message' => sprintf('Conseils ajoutés : %d', $count),
         ]);
     }
 }
