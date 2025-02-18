@@ -9,6 +9,8 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker;
 
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+
 use function random_int;
 
 class AppFixtures extends Fixture
@@ -17,6 +19,9 @@ class AppFixtures extends Fixture
     public const NB_ADVICES = 50;
     public const NB_MONTHS = 12;
     private array $months = [];
+    public const PASSWORD = 'test';
+
+    public function __construct(private UserPasswordHasherInterface $userPasswordHasher) {}
 
     public function load(ObjectManager $manager): void
     {
@@ -51,12 +56,15 @@ class AppFixtures extends Fixture
             "Nîmes",
             "Clermont-Ferrand",
         ];
+        $roles = ['ROLE_USER', 'ROLE_ADMIN'];
+
         for ($i = 1; $i <= self::NB_USERS; $i++) {
             $user = new User();
             $user
                 ->setLogin($faker->userName())
-                ->setPassword($faker->password())
-                ->setCity($faker->randomElement($cities));
+                ->setPassword($this->userPasswordHasher->hashPassword($user, self::PASSWORD))
+                ->setCity($faker->randomElement($cities))
+                ->setRoles([$faker->randomElement($roles)]);
             $manager->persist($user);
         }
         $manager->flush();
