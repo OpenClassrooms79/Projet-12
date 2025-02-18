@@ -7,7 +7,7 @@ use App\Repository\GeoRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -26,43 +26,45 @@ final class WeatherController extends AbstractController
     ) {}
 
     #[Route('/api/meteo', name: 'weather_city_default', methods: ['GET'])]
-    public function show(UserRepository $userRepository): Response
+    public function show(UserRepository $userRepository): JsonResponse
     {
         // TODO récupérer la ville de l'utilisateur courant
-        $id = 15;
+        $id = -8;
         $user = $userRepository->findOneBy(['id' => $id]);
         if ($user === null) {
-            return $this->json([
-                'code' => 404,
-                'id' => $id,
-                'message' => 'Utilisateur non trouvé',
-            ]);
+            return new JsonResponse(
+                [
+                    'id' => $id,
+                    'message' => 'Utilisateur non trouvé',
+                ],
+                404,
+            );
         }
 
         return $this->getWeatherFromCity($user->getCity());
     }
 
     #[Route('/api/meteo/{city}', name: 'weather_city_custom', methods: ['GET'])]
-    public function show2(string $city): Response
+    public function show2(string $city): JsonResponse
     {
         return $this->getWeatherFromCity($city);
     }
 
-    protected function getWeatherFromCity(string $city): Response
+    protected function getWeatherFromCity(string $city): JsonResponse
     {
         $geo = $this->getCoordinatesFromCity($city);
         if ($geo === null) {
-            return $this->json([
-                'code' => 404,
-                'message' => 'Ville non trouvée',
-            ]);
+            return new JsonResponse(
+                sprintf('Ville non trouvée : %s', $city),
+                404,
+            );
         }
 
         $weather_result = $this->getWeatherFromGeo($geo);
-        return $this->json([
-            'code' => 200,
-            'message' => $weather_result,
-        ]);
+        return new JsonResponse(
+            $weather_result,
+            200,
+        );
     }
 
     protected function getCoordinatesFromCity(string $city): ?Geo

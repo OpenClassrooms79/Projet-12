@@ -7,7 +7,7 @@ use App\Repository\AdviceRepository;
 use App\Repository\MonthRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 
@@ -27,23 +27,23 @@ final class AdviceController extends AbstractController
 
     // liste tous les conseils du mois en cours
     #[Route('/api/conseil', name: 'advice_current_month', methods: ['GET'])]
-    public function index(): Response
+    public function index(): JsonResponse
     {
-        return $this->json($this->getAdvicesByMonth((int) date('n')));
+        return new JsonResponse($this->getAdvicesByMonth((int) date('n')));
     }
 
     // liste tous les conseils du mois donné
     #[Route('/api/conseil/{month}', name: 'advice_specific_month', requirements: ['month' => Requirement::POSITIVE_INT], methods: ['GET'])]
-    public function index2(int $month): Response
+    public function index2(int $month): JsonResponse
     {
         if ($month < 1 || $month > 12) {
-            return $this->json([
-                'code' => 404,
-                'message' => 'Le numéro du mois doit être entre 1 et 12',
-            ], 404);
+            return new JsonResponse(
+                'Le numéro du mois doit être entre 1 et 12',
+                404,
+            );
         }
 
-        return $this->json($this->getAdvicesByMonth($month));
+        return new JsonResponse($this->getAdvicesByMonth($month));
     }
 
     protected function getAdvicesByMonth(int $month): array
@@ -60,7 +60,7 @@ final class AdviceController extends AbstractController
 
     // ajoute un nouveau conseil pour le(s) mois(s) donné(s) (séparés par une virgule)
     #[Route('/api/conseil/{months}/{detail}', name: 'advice_add', methods: ['POST'])]
-    public function create(string $months, string $detail): Response
+    public function create(string $months, string $detail): JsonResponse
     {
         $months_array = explode(',', $months);
         $months_array = array_filter($months_array, static function ($num) {
@@ -79,24 +79,25 @@ final class AdviceController extends AbstractController
         }
         $this->entityManager->flush();
 
-        return $this->json([
-            'code' => 200,
-            'message' => sprintf('Conseil créé, mois associés : %d', count($months_array)),
-        ]);
+        return new JsonResponse(
+            sprintf('Conseil créé, mois associés : %d', count($months_array)),
+        );
     }
 
     // met à jour la liste des mois du conseil $id, et éventuellement le détail
     #[Route('/api/conseil/{id}/{months}', name: 'advice_update', methods: ['PUT'])]
     #[Route('/api/conseil/{id}/{months}/{detail}', name: 'advice_update2', methods: ['PUT'])]
-    public function update(int $id, string $months, ?string $detail = null): Response
+    public function update(int $id, string $months, ?string $detail = null): JsonResponse
     {
         $advice = $this->adviceRepository->find($id);
         if ($advice === null) {
-            return $this->json([
-                'code' => 404,
-                'id' => $id,
-                'message' => 'Conseil non trouvé',
-            ]);
+            return new JsonResponse(
+                [
+                    'id' => $id,
+                    'message' => 'Conseil non trouvé',
+                ],
+                404,
+            );
         }
 
         $months_array = explode(',', $months);
@@ -124,33 +125,37 @@ final class AdviceController extends AbstractController
 
         $this->entityManager->flush();
 
-        return $this->json([
-            'code' => 200,
-            'id' => $id,
-            'message' => 'Conseil mis à jour',
-        ]);
+        return new JsonResponse(
+            [
+                'id' => $id,
+                'message' => 'Conseil mis à jour',
+            ],
+        );
     }
 
     #[Route('/api/conseil/{id}', name: 'advice_delete', requirements: ['id' => Requirement::POSITIVE_INT], methods: ['DELETE'])]
-    public function delete(int $id): Response
+    public function delete(int $id): JsonResponse
     {
         $advice = $this->adviceRepository->find($id);
 
         if ($advice === null) {
-            return $this->json([
-                'code' => 404,
-                'id' => $id,
-                'message' => 'Conseil non trouvé',
-            ]);
+            return new JsonResponse(
+                [
+                    'id' => $id,
+                    'message' => 'Conseil non trouvé',
+                ],
+                404,
+            );
         }
 
         $this->entityManager->remove($advice);
         $this->entityManager->flush();
 
-        return $this->json([
-            'code' => 200,
-            'id' => $id,
-            'message' => 'Conseil supprimé',
-        ]);
+        return new JsonResponse(
+            [
+                'id' => $id,
+                'message' => 'Conseil supprimé',
+            ],
+        );
     }
 }

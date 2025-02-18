@@ -2,18 +2,13 @@
 
 namespace App\Controller;
 
-use App\Entity\Advice;
+use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
-
-use function array_filter;
-use function count;
-use function explode;
-use function sprintf;
 
 final class UserController extends AbstractController
 {
@@ -22,76 +17,78 @@ final class UserController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
     ) {}
 
-    // ajoute un nouveau conseil pour le(s) mois(s) donné(s) (séparés par une virgule)
-    #[Route('/api/user/{login}/{password}/{city}', name: 'advice_add', methods: ['POST'])]
-    public function create(string $months, string $detail): Response
+    // crée un nouvel utilisateur
+    #[Route('/api/user/{login}/{password}/{city}', name: 'user_add', methods: ['POST'])]
+    public function create(string $login, string $password, string $city): JsonResponse
     {
-        $months_array = explode(',', $months);
-        $months_array = array_filter($months_array, static function ($num) {
-            return $num >= 1 && $num <= 12;
-        });
-
-        foreach ($months_array as $num) {
-            $month = $this->monthRepository->getMonthByNum((int) $num);
-            if ($month !== null) {
-                $advice = new Advice();
-                $advice
-                    ->addMonth($month)
-                    ->setDetail($detail);
-                $this->entityManager->persist($advice);
-            }
-        }
+        $user = new User();
+        $user
+            ->setLogin($login)
+            ->setPassword($password)
+            ->setCity($city);
+        $this->entityManager->persist($user);
         $this->entityManager->flush();
 
-        return $this->json([
-            'code' => 200,
-            'message' => sprintf('Conseil créé, mois associés : %d', count($months_array)),
-        ]);
+        return new JsonResponse(
+            [
+                'id' => $user->getId(),
+                'message' => sprintf('Utilisateur créé : %s', $login),
+            ],
+            200,
+        );
     }
 
     #[Route('/api/user/{id}/{city}', name: 'user_update', requirements: ['month' => Requirement::POSITIVE_INT], methods: ['PUT'])]
-    public function update(int $id, string $city): Response
+    public function update(int $id, string $city): JsonResponse
     {
         $user = $this->userRepository->find($id);
 
         if ($user === null) {
-            return $this->json([
-                'code' => 404,
-                'id' => $id,
-                'message' => 'Utilisateur non trouvé',
-            ]);
+            return new JsonResponse(
+                [
+                    'id' => $id,
+                    'message' => 'Utilisateur non trouvé',
+                ],
+                404,
+            );
         }
 
         $user->setCity($city);
         $this->entityManager->flush();
 
-        return $this->json([
-            'code' => 200,
-            'id' => $id,
-            'message' => 'Utilisateur mis à jour',
-        ]);
+        return new JsonResponse(
+            [
+                'id' => $id,
+                'message' => 'Utilisateur mis à jour',
+            ],
+            200,
+        );
     }
 
     #[Route('/api/user/{id}', name: 'user_delete', requirements: ['month' => Requirement::POSITIVE_INT], methods: ['DELETE'])]
-    public function delete(int $id): Response
+    public function delete(int $id): JsonResponse
     {
         $user = $this->userRepository->find($id);
 
         if ($user === null) {
-            return $this->json([
-                'code' => 404,
-                'id' => $id,
-                'message' => 'Utilisateur non trouvé',
-            ]);
+            return new JsonResponse(
+                [
+                    'id' => $id,
+                    'message' => 'Utilisateur non trouvé',
+                ],
+                404,
+            );
         }
 
         $this->entityManager->remove($user);
         $this->entityManager->flush();
 
-        return $this->json([
-            'code' => 200,
-            'id' => $id,
-            'message' => 'Utilisateur supprimé',
-        ]);
+        return new JsonResponse(
+            [
+                'id' => $id,
+                'message' => 'Utilisateur supprimé',
+            ],
+            200,
+        );
     }
 }
