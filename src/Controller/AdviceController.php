@@ -81,7 +81,7 @@ final class AdviceController extends AbstractController
 
         return $this->json([
             'code' => 200,
-            'message' => sprintf('Conseils ajoutés : %d', count($months_array)),
+            'message' => sprintf('Conseil créé, mois associés : %d', count($months_array)),
         ]);
     }
 
@@ -90,18 +90,19 @@ final class AdviceController extends AbstractController
     #[Route('/api/conseil/{id}/{months}/{detail}', name: 'advice_update2', methods: ['PUT'])]
     public function update(int $id, string $months, ?string $detail = null): Response
     {
-        $months_array = explode(',', $months);
-        $months_array = array_filter($months_array, static function ($month) {
-            return $month >= 1 && $month <= 12;
-        });
-
         $advice = $this->adviceRepository->find($id);
         if ($advice === null) {
             return $this->json([
                 'code' => 404,
+                'id' => $id,
                 'message' => 'Conseil non trouvé',
             ]);
         }
+
+        $months_array = explode(',', $months);
+        $months_array = array_filter($months_array, static function ($month) {
+            return $month >= 1 && $month <= 12;
+        });
 
         // suppression de tous les mois auxquels le conseil est actuellement associé
         $advice->getMonths()->clear();
@@ -125,7 +126,8 @@ final class AdviceController extends AbstractController
 
         return $this->json([
             'code' => 200,
-            'message' => sprintf('Conseils ajoutés : %d', $count),
+            'id' => $id,
+            'message' => 'Conseil mis à jour',
         ]);
     }
 

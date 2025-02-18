@@ -7,7 +7,6 @@ use App\Repository\GeoRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -20,16 +19,22 @@ use const JSON_THROW_ON_ERROR;
 
 final class WeatherController extends AbstractController
 {
-    public function __construct(private GeoRepository $geoRepository, private TranslatorInterface $translator, private EntityManagerInterface $entityManager) {}
+    public function __construct(
+        private readonly GeoRepository $geoRepository,
+        private readonly TranslatorInterface $translator,
+        private readonly EntityManagerInterface $entityManager,
+    ) {}
 
-    #[Route('/api/meteo', name: 'app_weather_city_default', methods: ['GET'])]
+    #[Route('/api/meteo', name: 'weather_city_default', methods: ['GET'])]
     public function show(UserRepository $userRepository): Response
     {
         // TODO récupérer la ville de l'utilisateur courant
-        $user = $userRepository->findOneBy(['id' => 15]);
+        $id = 15;
+        $user = $userRepository->findOneBy(['id' => $id]);
         if ($user === null) {
             return $this->json([
                 'code' => 404,
+                'id' => $id,
                 'message' => 'Utilisateur non trouvé',
             ]);
         }
@@ -37,7 +42,7 @@ final class WeatherController extends AbstractController
         return $this->getWeatherFromCity($user->getCity());
     }
 
-    #[Route('/api/meteo/{city}', name: 'app_weather_city', methods: ['GET'])]
+    #[Route('/api/meteo/{city}', name: 'weather_city_custom', methods: ['GET'])]
     public function show2(string $city): Response
     {
         return $this->getWeatherFromCity($city);
