@@ -8,6 +8,7 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -37,7 +38,7 @@ final class WeatherController extends AbstractController
                     'id' => $id,
                     'message' => 'Utilisateur non trouvé',
                 ],
-                404,
+                Response::HTTP_NOT_FOUND,
             );
         }
 
@@ -56,15 +57,12 @@ final class WeatherController extends AbstractController
         if ($geo === null) {
             return new JsonResponse(
                 sprintf('Ville non trouvée : %s', $city),
-                404,
+                Response::HTTP_NOT_FOUND,
             );
         }
 
         $weather_result = $this->getWeatherFromGeo($geo);
-        return new JsonResponse(
-            $weather_result,
-            200,
-        );
+        return new JsonResponse($weather_result);
     }
 
     protected function getCoordinatesFromCity(string $city): ?Geo

@@ -8,6 +8,7 @@ use App\Repository\MonthRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 
@@ -39,7 +40,7 @@ final class AdviceController extends AbstractController
         if ($month < 1 || $month > 12) {
             return new JsonResponse(
                 'Le numéro du mois doit être entre 1 et 12',
-                404,
+                Response::HTTP_NOT_FOUND,
             );
         }
 
@@ -96,7 +97,7 @@ final class AdviceController extends AbstractController
                     'id' => $id,
                     'message' => 'Conseil non trouvé',
                 ],
-                404,
+                Response::HTTP_NOT_FOUND,
             );
         }
 
@@ -144,7 +145,7 @@ final class AdviceController extends AbstractController
                     'id' => $id,
                     'message' => 'Conseil non trouvé',
                 ],
-                404,
+                Response::HTTP_NOT_FOUND,
             );
         }
 

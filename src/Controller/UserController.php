@@ -7,6 +7,7 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 
@@ -34,7 +35,6 @@ final class UserController extends AbstractController
                 'id' => $user->getId(),
                 'message' => sprintf('Utilisateur créé : %s', $login),
             ],
-            200,
         );
     }
 
@@ -49,7 +49,7 @@ final class UserController extends AbstractController
                     'id' => $id,
                     'message' => 'Utilisateur non trouvé',
                 ],
-                404,
+                Response::HTTP_NOT_FOUND,
             );
         }
 
@@ -61,7 +61,6 @@ final class UserController extends AbstractController
                 'id' => $id,
                 'message' => 'Utilisateur mis à jour',
             ],
-            200,
         );
     }
 
@@ -76,7 +75,7 @@ final class UserController extends AbstractController
                     'id' => $id,
                     'message' => 'Utilisateur non trouvé',
                 ],
-                404,
+                Response::HTTP_NOT_FOUND,
             );
         }
 
@@ -88,7 +87,6 @@ final class UserController extends AbstractController
                 'id' => $id,
                 'message' => 'Utilisateur supprimé',
             ],
-            200,
         );
     }
 }
