@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 
@@ -20,13 +21,14 @@ final class UserController extends AbstractController
 
     // crée un nouvel utilisateur
     #[Route('/api/user/{login}/{password}/{city}', name: 'user_add', methods: ['POST'])]
-    public function create(string $login, string $password, string $city): JsonResponse
+    public function create(string $login, string $password, string $city, UserPasswordHasherInterface $userPasswordHasher): JsonResponse
     {
         $user = new User();
         $user
             ->setLogin($login)
-            ->setPassword($password)
-            ->setCity($city);
+            ->setPassword($userPasswordHasher->hashPassword($user, $password))
+            ->setCity($city)
+            ->setRoles(['ROLE_USER']);
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 

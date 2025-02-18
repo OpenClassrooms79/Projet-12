@@ -42,11 +42,10 @@ security:
   access_control:
     - { path: ^/api/auth, roles: PUBLIC_ACCESS }
     - { path: ^/api/user, methods: [ POST ], roles: PUBLIC_ACCESS }
-    - { path: ^/api/conseil, methods: [ GET ], roles: PUBLIC_ACCESS }
-    - { path: ^/api/meteo, methods: [ GET ], roles: PUBLIC_ACCESS }
-    #- { path: ^/api/conseil, methods: [ POST, PUT, DELETE ], roles: ROLE_ADMIN }
-    - { path: ^/api/conseil, methods: [ POST, PUT, DELETE ], roles: PUBLIC_ACCESS }
-    - { path: ^/api/user, methods: [ PUT, DELETE ], roles: PUBLIC_ACCESS }
+    - { path: ^/api/conseil, methods: [ GET ], roles: [ ROLE_USER, ROLE_ADMIN ] }
+    - { path: ^/api/meteo, methods: [ GET ], roles: [ ROLE_USER, ROLE_ADMIN ] }
+    - { path: ^/api/conseil, methods: [ POST, PUT, DELETE ], roles: ROLE_ADMIN }
+    - { path: ^/api/user, methods: [ PUT, DELETE ], roles: ROLE_ADMIN }
 
 when@test:
   security:
