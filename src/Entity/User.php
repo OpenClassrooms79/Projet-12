@@ -22,7 +22,7 @@ class User
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $post_code = null;
+    private ?string $city = null;
 
     public function getId(): ?int
     {
@@ -53,14 +53,14 @@ class User
         return $this;
     }
 
-    public function getPostCode(): ?string
+    public function getCity(): ?string
     {
-        return $this->post_code;
+        return $this->city;
     }
 
-    public function setPostCode(string $post_code): static
+    public function setCity(string $city): static
     {
-        $this->post_code = $post_code;
+        $this->city = $city;
 
         return $this;
     }

@@ -5,7 +5,6 @@ namespace App\DataFixtures;
 use App\Entity\Advice;
 use App\Entity\Month;
 use App\Entity\User;
-use App\Repository\MonthRepository;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker;
@@ -30,12 +29,34 @@ class AppFixtures extends Fixture
 
     public function loadUsers(ObjectManager $manager, Faker\Generator $faker): void
     {
+        $cities = [
+            "Paris",
+            "Marseille",
+            "Lyon",
+            "Toulouse",
+            "Nice",
+            "Nantes",
+            "Strasbourg",
+            "Montpellier",
+            "Bordeaux",
+            "Lille",
+            "Rennes",
+            "Reims",
+            "Le Havre",
+            "Saint-Étienne",
+            "Toulon",
+            "Grenoble",
+            "Dijon",
+            "Angers",
+            "Nîmes",
+            "Clermont-Ferrand",
+        ];
         for ($i = 1; $i <= self::NB_USERS; $i++) {
             $user = new User();
             $user
                 ->setLogin($faker->userName())
                 ->setPassword($faker->password())
-                ->setPostCode($faker->postcode());
+                ->setCity($faker->randomElement($cities));
             $manager->persist($user);
         }
         $manager->flush();
