@@ -55,8 +55,7 @@ final class WeatherController extends AbstractController
             );
         }
 
-        $weather_result = $this->getWeatherFromGeo($geo);
-        return new JsonResponse($weather_result);
+        return new JsonResponse($this->getWeatherFromGeo($geo));
     }
 
     protected function getCoordinatesFromCity(string $city): ?Geo
@@ -98,22 +97,25 @@ final class WeatherController extends AbstractController
     protected function getWeatherFromGeo(Geo $geo): ?array
     {
         try {
-            return json_decode(
-                file_get_contents(
-                    $this->translator->trans(
-                        $_ENV['CURRENT_WEATHER_URL'],
-                        [
-                            '{API_KEY}' => $_ENV['OPENWEATHERMAP_API_KEY'],
-                            '{LATITUDE}' => $geo->getLatitude(),
-                            '{LONGITUDE}' => $geo->getLongitude(),
-                            '{LANGUAGE_CODE}' => 'FR',
-                        ],
+            return [
+                'city' => $geo->getName(),
+                'weather' => json_decode(
+                    file_get_contents(
+                        $this->translator->trans(
+                            $_ENV['CURRENT_WEATHER_URL'],
+                            [
+                                '{API_KEY}' => $_ENV['OPENWEATHERMAP_API_KEY'],
+                                '{LATITUDE}' => $geo->getLatitude(),
+                                '{LONGITUDE}' => $geo->getLongitude(),
+                                '{LANGUAGE_CODE}' => 'FR',
+                            ],
+                        ),
                     ),
+                    true,
+                    512,
+                    JSON_THROW_ON_ERROR,
                 ),
-                true,
-                512,
-                JSON_THROW_ON_ERROR,
-            );
+            ];
         } catch (\Exception $e) {
             return null;
         }

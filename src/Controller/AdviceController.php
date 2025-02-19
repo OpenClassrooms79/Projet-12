@@ -13,6 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 
 use function array_filter;
+use function count;
 use function date;
 use function explode;
 
@@ -35,10 +36,10 @@ final class AdviceController extends AbstractController
     #[Route('/api/conseil/{month}', name: 'advice_specific_month', requirements: ['month' => Requirement::POSITIVE_INT], methods: ['GET'])]
     public function index2(int $month): JsonResponse
     {
-        if ($month < 1 || $month > 12) {
+        if ($moznth < 1 || $month > 12) {
             return new JsonResponse(
                 'Le numéro du mois doit être entre 1 et 12',
-                Response::HTTP_NOT_FOUND,
+                Response::HTTP_BAD_REQUEST,
             );
         }
 
@@ -65,6 +66,25 @@ final class AdviceController extends AbstractController
         $months_array = array_filter($months_array, static function ($num) {
             return $num >= 1 && $num <= 12;
         });
+
+        if (count($months_array) === 0) {
+            return new JsonResponse(
+                [
+                    'message' => 'Veuillez fournir au moins un numéro de mois valide.',
+                ],
+                Response::HTTP_BAD_REQUEST,
+            );
+        }
+
+        $detail = mb_trim($detail);
+        if ($detail === '') {
+            return new JsonResponse(
+                [
+                    'message' => 'Veuillez fournir un conseil.',
+                ],
+                Response::HTTP_BAD_REQUEST,
+            );
+        }
 
         $advice = new Advice();
         $advice->setDetail($detail);
@@ -110,6 +130,15 @@ final class AdviceController extends AbstractController
             return $month >= 1 && $month <= 12;
         });
 
+        if (count($months_array) === 0) {
+            return new JsonResponse(
+                [
+                    'message' => 'Veuillez fournir au moins un numéro de mois valide.',
+                ],
+                Response::HTTP_BAD_REQUEST,
+            );
+        }
+
         // suppression de tous les mois auxquels le conseil est actuellement associé
         $advice->getMonths()->clear();
 
@@ -124,16 +153,30 @@ final class AdviceController extends AbstractController
         }
 
         // mise à jour du détail (si fourni dans la requête)
+
         if ($detail !== null) {
-            $advice->setDetail($detail);
+            $detail = mb_trim($detail);
+            if ($detail !== '' && $detail !== $advice->getDetail()) {
+                $advice->setDetail($detail);
+            } else {
+                return new JsonResponse(
+                    [
+                        'message' => 'Si le détail est fourni, ce dernier ne peut pas être vide.',
+                    ],
+                    Response::HTTP_BAD_REQUEST,
+                );
+            }
         }
 
         $this->entityManager->flush();
 
         return new JsonResponse(
             [
+                'conseil' => [
+                    'id' => $advice->getId(),
+                    'detail' => $advice->getDetail(),
+                ],
                 'months' => $months_names,
-                'id' => $id,
                 'message' => 'Conseil mis à jour',
             ],
         );

@@ -4,9 +4,11 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,22 +22,64 @@ final class UserController extends AbstractController
     ) {}
 
     // crée un nouvel utilisateur
-    #[Route('/api/user/{login}/{password}/{city}', name: 'user_add', methods: ['POST'])]
-    public function create(string $login, string $password, string $city, UserPasswordHasherInterface $userPasswordHasher): JsonResponse
+    #[Route('/api/user', name: 'user_add', methods: ['POST'])]
+    public function create(UserPasswordHasherInterface $userPasswordHasher, Request $request): JsonResponse
     {
+        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        if (!isset($data['login'], $data['password'], $data['city'])) {
+            return new JsonResponse(
+                [
+                    'message' => 'Pour creer un nouvel utilisateur, veuillez fournir un login, un mot de passe et une ville.',
+                    'paramètres' => [
+                        'login' => 'string',
+                        'password' => 'string',
+                        'city' => 'string',
+                    ],
+                ],
+                Response::HTTP_BAD_REQUEST,
+            );
+        }
+
+        $login = mb_trim($data['login']);
+        $password = mb_trim($data['password']);
+        $city = mb_trim($data['city']);
+
+        if ($login === '' || $password === '' || $city === '') {
+            return new JsonResponse(
+                [
+                    'message' => 'Veuillez fournir un login, un mot de passe et une ville.',
+                    'paramètres' => [
+                        'login' => 'string',
+                        'password' => 'string',
+                        'city' => 'string',
+                    ],
+                ],
+                Response::HTTP_BAD_REQUEST,
+            );
+        }
+
+
         $user = new User();
         $user
-            ->setLogin($login)
-            ->setPassword($userPasswordHasher->hashPassword($user, $password))
-            ->setCity($city)
+            ->setLogin($data['login'])
+            ->setPassword($userPasswordHasher->hashPassword($user, $data['password']))
+            ->setCity($data['city'])
             ->setRoles(['ROLE_USER']);
         $this->entityManager->persist($user);
-        $this->entityManager->flush();
+        try {
+            $this->entityManager->flush();
+        } catch (UniqueConstraintViolationException $e) {
+            return new JsonResponse(
+                'Utilisateur deja existant : ' . $data['login'],
+                Response::HTTP_CONFLICT,
+            );
+        }
 
         return new JsonResponse(
             [
                 'id' => $user->getId(),
-                'message' => sprintf('Utilisateur créé : %s', $login),
+                'message' => sprintf('Utilisateur créé : %s', $data['login']),
             ],
             Response::HTTP_CREATED,
         );
@@ -53,6 +97,17 @@ final class UserController extends AbstractController
                     'message' => 'Utilisateur non trouvé',
                 ],
                 Response::HTTP_NOT_FOUND,
+            );
+        }
+
+        $city = mb_trim($city);
+        if ($city === '') {
+            return new JsonResponse(
+                [
+                    'id' => $id,
+                    'message' => 'Veuillez fournir une ville',
+                ],
+                Response::HTTP_BAD_REQUEST,
             );
         }
 
