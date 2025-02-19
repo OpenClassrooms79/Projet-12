@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\Geo;
 use App\Repository\GeoRepository;
-use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,17 +26,12 @@ final class WeatherController extends AbstractController
     ) {}
 
     #[Route('/api/meteo', name: 'weather_city_default', methods: ['GET'])]
-    public function show(UserRepository $userRepository): JsonResponse
+    public function show(): JsonResponse
     {
-        // TODO récupérer la ville de l'utilisateur courant
-        $id = -8;
-        $user = $userRepository->findOneBy(['id' => $id]);
+        $user = $this->getUser();
         if ($user === null) {
             return new JsonResponse(
-                [
-                    'id' => $id,
-                    'message' => 'Utilisateur non trouvé',
-                ],
+                'Utilisateur non trouvé',
                 Response::HTTP_NOT_FOUND,
             );
         }

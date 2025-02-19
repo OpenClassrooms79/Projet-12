@@ -13,10 +13,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 
 use function array_filter;
-use function count;
 use function date;
 use function explode;
-use function sprintf;
 
 final class AdviceController extends AbstractController
 {
@@ -59,29 +57,35 @@ final class AdviceController extends AbstractController
             ->getResult();
     }
 
-    // ajoute un nouveau conseil pour le(s) mois(s) donné(s) (séparés par une virgule)
+    // ajoute un nouveau conseil pour le(s) mois(s) donné(s) (séparés par un tiret)
     #[Route('/api/conseil/{months}/{detail}', name: 'advice_add', methods: ['POST'])]
     public function create(string $months, string $detail): JsonResponse
     {
-        $months_array = explode(',', $months);
+        $months_array = explode('-', $months);
         $months_array = array_filter($months_array, static function ($num) {
             return $num >= 1 && $num <= 12;
         });
 
+        $advice = new Advice();
+        $advice->setDetail($detail);
+        $months_names = [];
         foreach ($months_array as $num) {
             $month = $this->monthRepository->getMonthByNum((int) $num);
             if ($month !== null) {
-                $advice = new Advice();
-                $advice
-                    ->addMonth($month)
-                    ->setDetail($detail);
-                $this->entityManager->persist($advice);
+                $advice->addMonth($month);
+                $months_names[] = $month->getName();
             }
         }
+        $this->entityManager->persist($advice);
         $this->entityManager->flush();
 
         return new JsonResponse(
-            sprintf('Conseil créé, mois associés : %d', count($months_array)),
+            [
+                'months' => $months_names,
+                'id' => $advice->getId(),
+                'message' => 'Conseil créé',
+            ],
+            Response::HTTP_CREATED,
         );
     }
 
@@ -110,12 +114,12 @@ final class AdviceController extends AbstractController
         $advice->getMonths()->clear();
 
         // ajout des nouveaux mois au conseil
-        $count = 0;
+        $months_names = [];
         foreach ($months_array as $num) {
             $month = $this->monthRepository->find($num);
             if ($month !== null) {
                 $advice->addMonth($month);
-                $count++;
+                $months_names[] = $month->getName();
             }
         }
 
@@ -128,6 +132,7 @@ final class AdviceController extends AbstractController
 
         return new JsonResponse(
             [
+                'months' => $months_names,
                 'id' => $id,
                 'message' => 'Conseil mis à jour',
             ],

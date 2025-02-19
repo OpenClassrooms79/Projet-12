@@ -37,6 +37,7 @@ final class UserController extends AbstractController
                 'id' => $user->getId(),
                 'message' => sprintf('Utilisateur créé : %s', $login),
             ],
+            Response::HTTP_CREATED,
         );
     }
 
