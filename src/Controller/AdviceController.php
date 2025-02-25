@@ -29,7 +29,7 @@ final class AdviceController extends AbstractController
     #[Route('/api/conseil', name: 'advice_current_month', methods: ['GET'])]
     public function index(): JsonResponse
     {
-        return new JsonResponse($this->getAdvicesByMonth((int) date('n')));
+        return new JsonResponse($this->adviceRepository->getAdvicesByMonth((int) date('n')));
     }
 
     // liste tous les conseils du mois donné
@@ -43,19 +43,7 @@ final class AdviceController extends AbstractController
             );
         }
 
-        return new JsonResponse($this->getAdvicesByMonth($month));
-    }
-
-    protected function getAdvicesByMonth(int $month): array
-    {
-        return $this->adviceRepository
-            ->createQueryBuilder('a')
-            ->select('a.id', 'a.detail', 'm.name')
-            ->innerJoin('a.months', 'm')
-            ->where('m.num = :num')
-            ->setParameter('num', $month)
-            ->getQuery()
-            ->getResult();
+        return new JsonResponse($this->adviceRepository->getAdvicesByMonth($month));
     }
 
     // ajoute un nouveau conseil pour le(s) mois(s) donné(s) (séparés par un tiret)
