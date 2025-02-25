@@ -36,7 +36,7 @@ final class AdviceController extends AbstractController
     #[Route('/api/conseil/{month}', name: 'advice_specific_month', requirements: ['month' => Requirement::POSITIVE_INT], methods: ['GET'])]
     public function index2(int $month): JsonResponse
     {
-        if ($moznth < 1 || $month > 12) {
+        if ($month < 1 || $month > 12) {
             return new JsonResponse(
                 'Le numéro du mois doit être entre 1 et 12',
                 Response::HTTP_BAD_REQUEST,

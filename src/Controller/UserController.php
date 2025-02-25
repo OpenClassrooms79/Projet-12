@@ -69,7 +69,7 @@ final class UserController extends AbstractController
         $this->entityManager->persist($user);
         try {
             $this->entityManager->flush();
-        } catch (UniqueConstraintViolationException $e) {
+        } catch (UniqueConstraintViolationException) {
             return new JsonResponse(
                 'Utilisateur deja existant : ' . $data['login'],
                 Response::HTTP_CONFLICT,

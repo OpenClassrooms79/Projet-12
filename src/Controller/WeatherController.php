@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Geo;
 use App\Repository\GeoRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -86,7 +87,7 @@ final class WeatherController extends AbstractController
                 $geo->setLongitude($geo_result['lon']);
                 $this->entityManager->persist($geo);
                 $this->entityManager->flush();
-            } catch (\Exception $e) {
+            } catch (Exception) {
                 return null;
             }
         }
@@ -116,7 +117,7 @@ final class WeatherController extends AbstractController
                     JSON_THROW_ON_ERROR,
                 ),
             ];
-        } catch (\Exception $e) {
+        } catch (Exception) {
             return null;
         }
     }

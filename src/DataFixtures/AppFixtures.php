@@ -21,7 +21,7 @@ class AppFixtures extends Fixture
     private array $months = [];
     public const PASSWORD = 'test';
 
-    public function __construct(private UserPasswordHasherInterface $userPasswordHasher) {}
+    public function __construct(private readonly UserPasswordHasherInterface $userPasswordHasher) {}
 
     public function load(ObjectManager $manager): void
     {
