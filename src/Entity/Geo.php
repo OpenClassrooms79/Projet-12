@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: GeoRepository::class)]
+#[ORM\UniqueConstraint(name: 'geo_unique', columns: ['latitude', 'longitude'])]
 #[ApiResource]
 class Geo
 {

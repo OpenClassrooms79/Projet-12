@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Geo;
+use App\Entity\Weather;
 use App\Repository\GeoRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -63,6 +64,11 @@ final class WeatherController extends AbstractController
     {
         // vérifier si les infos ne sont pas déjà en cache
         $geo = $this->geoRepository->findOneBy(['name' => $city]);
+
+        /* TODO vérifier si les données en cache sont suffisamment récentes (utiliser Weather::CACHE_DURATION)
+         * TODO si trop anciennes, appeler l'API.
+         */
+
         if ($geo === null) {
             try {
                 $geo_result = json_decode(
@@ -82,7 +88,15 @@ final class WeatherController extends AbstractController
                 // mettre en cache les infos
                 $geo = new Geo();
                 $geo->setCountryCode($geo_result['country']);
-                $geo->setName($geo_result['name']);
+
+                if ($geo_result['local_names']['fr']) {
+                    // si le nom en français existe, on utilise celui-ci
+                    $geo->setName($geo_result['local_names']['fr']);
+                } else {
+                    // sinon on utilise le nom par défaut
+                    $geo->setName($geo_result['name']);
+                }
+
                 $geo->setLatitude($geo_result['lat']);
                 $geo->setLongitude($geo_result['lon']);
                 $this->entityManager->persist($geo);
@@ -97,10 +111,12 @@ final class WeatherController extends AbstractController
 
     protected function getWeatherFromGeo(Geo $geo): ?array
     {
-        try {
-            return [
-                'city' => $geo->getName(),
-                'weather' => json_decode(
+        // récupération dans la base de la météo en cache pour ces coordonnées
+        $weatherCollection = $geo->getWeather();
+
+        if ($weatherCollection->isEmpty()) {
+            try {
+                $weather_data = json_decode(
                     file_get_contents(
                         $this->translator->trans(
                             $_ENV['CURRENT_WEATHER_URL'],
@@ -115,10 +131,30 @@ final class WeatherController extends AbstractController
                     true,
                     512,
                     JSON_THROW_ON_ERROR,
-                ),
-            ];
-        } catch (Exception) {
-            return null;
+                );
+
+                $weather = new Weather();
+                $weather->setGeo($geo);
+                $weather->setDate(\DateTime::createFromFormat('U', $weather_data['dt']));
+                $weather->setDescription($weather_data['weather'][0]['description']);
+
+                $this->entityManager->persist($weather);
+                $this->entityManager->flush();
+
+                $from = 'API';
+            } catch (Exception) {
+                return null;
+            }
+        } else {
+            $weather = $weatherCollection->first();
+            $from = 'cache';
         }
+
+        return [
+            'city' => $geo->getName(),
+            'weather' => $weather->getDescription(),
+            'date' => $weather->getDate()->format('d/m/Y H:i:s'),
+            'from' => $from,
+        ];
     }
 }

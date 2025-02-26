@@ -12,6 +12,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ApiResource]
 class Weather
 {
+    const CACHE_DURATION = 14400; // durée de conservation (en secondes) des données météo en cache
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
