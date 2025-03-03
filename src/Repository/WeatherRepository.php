@@ -60,7 +60,7 @@ class WeatherRepository extends ServiceEntityRepository
 
             // Si les données en cache sont trop anciennes, appeler l'API
             $diff = (new DateTime())->getTimestamp() - $weather->getDate()->getTimestamp();
-            if ($diff > Weather::CACHE_DURATION) {
+            if ($diff > $_ENV['CACHE_DURATION']) {
                 // effacer anciennes données
                 $this->entityManager->remove($weather);
                 $this->entityManager->flush();
