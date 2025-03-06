@@ -1,0 +1,7 @@
+No error: "Pas d'erreur"
+Syntax error: "Erreur de syntaxe"
+Maximum stack depth exceeded: "La taille maximum de la pile est dépassée"
+State mismatch (invalid or malformed JSON): "JSON malformé ou invalide"
+Control character error, possibly incorrectly encoded: "Erreur de caractère de contrôle, peut-être mal encodé"
+Malformed UTF-8 characters, possibly incorrectly encoded: "Caractères UTF-8 malformés, peut-être mal encodés"
+The decoded property name is invalid: "Le nom d'une propriété décodée est invalide"
