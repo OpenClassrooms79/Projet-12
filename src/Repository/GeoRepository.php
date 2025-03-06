@@ -5,7 +5,6 @@ namespace App\Repository;
 use App\Entity\Geo;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use Exception;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function file_get_contents;
@@ -29,26 +28,32 @@ class GeoRepository extends ServiceEntityRepository
         $geo = $this->findOneBy(['name' => $city]);
 
         if ($geo === null) {
-            try {
-                $geo_result = json_decode(
-                    file_get_contents(
-                        $this->translator->trans(
-                            $_ENV['GEO_COORDINATES_URL'],
-                            [
-                                '{API_KEY}' => $_ENV['OPENWEATHERMAP_API_KEY'],
-                                '{CITY}' => $city,
-                            ],
-                        ),
+            $geo_result = json_decode(
+                file_get_contents(
+                    $this->translator->trans(
+                        $_ENV['GEO_COORDINATES_URL'],
+                        [
+                            '{API_KEY}' => urlencode($_ENV['OPENWEATHERMAP_API_KEY']),
+                            '{CITY}' => urlencode($city),
+                        ],
                     ),
-                    true,
-                    512,
-                    JSON_THROW_ON_ERROR,
-                )[0];
+                ),
+                true,
+                512,
+                JSON_THROW_ON_ERROR,
+            )[0];
+
+            // vérifier si les infos ne sont pas déjà en cache avec le nom français récupéré
+            if (isset($geo_result['local_names']['fr'])) {
+                $geo = $this->findOneBy(['name' => $geo_result['local_names']['fr']]);
+            }
+
+            if ($geo === null) {
                 // mettre en cache les infos
                 $geo = new Geo();
                 $geo->setCountryCode($geo_result['country']);
 
-                if ($geo_result['local_names']['fr']) {
+                if (isset($geo_result['local_names']['fr'])) {
                     // si le nom en français existe, on utilise celui-ci
                     $geo->setName($geo_result['local_names']['fr']);
                 } else {
@@ -60,8 +65,6 @@ class GeoRepository extends ServiceEntityRepository
                 $geo->setLongitude($geo_result['lon']);
                 $this->getEntityManager()->persist($geo);
                 $this->getEntityManager()->flush();
-            } catch (Exception) {
-                return null;
             }
         }
 

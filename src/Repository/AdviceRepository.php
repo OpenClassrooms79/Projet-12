@@ -18,7 +18,7 @@ class AdviceRepository extends ServiceEntityRepository
 
     public function getAdvicesByMonth(int $month): array
     {
-        return $this->adviceRepository
+        return $this
             ->createQueryBuilder('a')
             ->select('a.id', 'a.detail', 'm.name')
             ->innerJoin('a.months', 'm')

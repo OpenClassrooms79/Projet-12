@@ -8,7 +8,6 @@ use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
-use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -83,34 +82,31 @@ class WeatherRepository extends ServiceEntityRepository
 
     public function getWeatherFromAPI(Geo $geo): ?Weather
     {
-        try {
-            $weather_data = json_decode(
-                file_get_contents(
-                    $this->translator->trans(
-                        $_ENV['CURRENT_WEATHER_URL'],
-                        [
-                            '{API_KEY}' => $_ENV['OPENWEATHERMAP_API_KEY'],
-                            '{LATITUDE}' => $geo->getLatitude(),
-                            '{LONGITUDE}' => $geo->getLongitude(),
-                            '{LANGUAGE_CODE}' => 'FR',
-                        ],
-                    ),
+        $weather_data = json_decode(
+            file_get_contents(
+                $this->translator->trans(
+                    $_ENV['CURRENT_WEATHER_URL'],
+                    [
+                        '{API_KEY}' => urlencode($_ENV['OPENWEATHERMAP_API_KEY']),
+                        '{LATITUDE}' => urlencode($geo->getLatitude()),
+                        '{LONGITUDE}' => urlencode($geo->getLongitude()),
+                        '{LANGUAGE_CODE}' => 'FR',
+                    ],
                 ),
-                true,
-                512,
-                JSON_THROW_ON_ERROR,
-            );
+            ),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
 
-            $weather = new Weather();
-            $weather->setGeo($geo);
-            $weather->setDate(new DateTime('now'));
-            $weather->setDescription($weather_data['weather'][0]['description']);
+        $weather = new Weather();
+        $weather->setGeo($geo);
+        $weather->setDate(new DateTime('now'));
+        $weather->setDescription($weather_data['weather'][0]['description']);
 
-            $this->entityManager->persist($weather);
-            $this->entityManager->flush();
-        } catch (Exception) {
-            return null;
-        }
+        $this->entityManager->persist($weather);
+        $this->entityManager->flush();
+
         return $weather;
     }
 }
