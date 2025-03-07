@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Repository\WeatherRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -15,7 +16,12 @@ final class WeatherController extends AbstractController
         private readonly WeatherRepository $weatherRepository,
     ) {}
 
-    #[Route('/api/meteo', name: 'weather_city_default', methods: ['GET'])]
+    /**
+     * renvoie les données météo de la ville de l'utilisateur authentifié
+     *
+     * @return JsonResponse
+     */
+    #[Route('/api/meteo', name: 'weather_city_default', methods: [Request::METHOD_GET])]
     public function show(): JsonResponse
     {
         /** @var User $user */
@@ -30,7 +36,13 @@ final class WeatherController extends AbstractController
         return $this->weatherRepository->getWeatherFromCity($user->getCity());
     }
 
-    #[Route('/api/meteo/{city}', name: 'weather_city_custom', methods: ['GET'])]
+    /**
+     * renvoie les données météo de la ville donnée
+     *
+     * @param string $city
+     * @return JsonResponse
+     */
+    #[Route('/api/meteo/{city}', name: 'weather_city_custom', methods: [Request::METHOD_GET])]
     public function show2(string $city): JsonResponse
     {
         return $this->weatherRepository->getWeatherFromCity($city);
