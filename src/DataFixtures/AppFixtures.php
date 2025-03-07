@@ -9,6 +9,7 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker;
 
+use Random\RandomException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 use function random_int;
@@ -23,6 +24,9 @@ class AppFixtures extends Fixture
 
     public function __construct(private readonly UserPasswordHasherInterface $userPasswordHasher) {}
 
+    /**
+     * @throws RandomException
+     */
     public function load(ObjectManager $manager): void
     {
         $faker = Faker\Factory::create();
@@ -85,6 +89,9 @@ class AppFixtures extends Fixture
         $this->months = $manager->getRepository(Month::class)->findAll();
     }
 
+    /**
+     * @throws RandomException
+     */
     public function loadAdvices(ObjectManager $manager, Faker\Generator $faker): void
     {
         for ($i = 1; $i <= self::NB_ADVICES; $i++) {

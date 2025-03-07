@@ -37,6 +37,9 @@ class WeatherRepository extends ServiceEntityRepository
     /*
      * renvoie les données météo de la ville donnée
      */
+    /**
+     * @throws JsonException
+     */
     public function getWeatherFromCity(string $city): JsonResponse
     {
         $geo = $this->geoRepository->getCoordinatesFromCity($city);
@@ -53,6 +56,9 @@ class WeatherRepository extends ServiceEntityRepository
     /*
      * renvoie les données météo des coordonnées géographiques données
      */
+    /**
+     * @throws JsonException
+     */
     protected function getWeatherFromGeo(Geo $geo): ?array
     {
         // récupération dans la base de la météo en cache pour ces coordonnées
@@ -65,7 +71,7 @@ class WeatherRepository extends ServiceEntityRepository
             $weather = $weatherCollection->first();
 
             // Si les données en cache sont trop anciennes, appeler l'API
-            $diff = (new DateTime())->getTimestamp() - $weather->getDate()->getTimestamp();
+            $diff = (new DateTime())->getTimestamp() - $weather->getDate()?->getTimestamp();
             if ($diff > $_ENV['CACHE_DURATION']) {
                 // effacer anciennes données
                 $this->entityManager->remove($weather);
@@ -82,7 +88,7 @@ class WeatherRepository extends ServiceEntityRepository
         return [
             'city' => $geo->getName(),
             'weather' => $weather->getDescription(),
-            'date' => $weather->getDate()->format('d/m/Y H:i:s'),
+            'date' => $weather->getDate()?->format('d/m/Y H:i:s'),
             'from' => $from,
         ];
     }
