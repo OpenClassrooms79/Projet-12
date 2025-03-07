@@ -8,6 +8,7 @@ use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use JsonException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -33,6 +34,9 @@ class WeatherRepository extends ServiceEntityRepository
         parent::__construct($registry, Weather::class);
     }
 
+    /*
+     * renvoie les données météo de la ville donnée
+     */
     public function getWeatherFromCity(string $city): JsonResponse
     {
         $geo = $this->geoRepository->getCoordinatesFromCity($city);
@@ -46,6 +50,9 @@ class WeatherRepository extends ServiceEntityRepository
         return new JsonResponse($this->getWeatherFromGeo($geo));
     }
 
+    /*
+     * renvoie les données météo des coordonnées géographiques données
+     */
     protected function getWeatherFromGeo(Geo $geo): ?array
     {
         // récupération dans la base de la météo en cache pour ces coordonnées
@@ -80,6 +87,11 @@ class WeatherRepository extends ServiceEntityRepository
         ];
     }
 
+    /**
+     * renvoie les données météo d'OpenWeatherMap pour les coordonnées géographiques spécifiées
+     *
+     * @throws JsonException
+     */
     public function getWeatherFromAPI(Geo $geo): ?Weather
     {
         $weather_data = json_decode(

@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_key_exists;
+use function sprintf;
 
 class ExceptionSubscriber implements EventSubscriberInterface
 {
@@ -22,39 +23,23 @@ class ExceptionSubscriber implements EventSubscriberInterface
         $this->translator = $translator;
     }
 
-    public function onJsonException(ExceptionEvent $event): void
-    {
-        $exception = $event->getThrowable();
-
-        if ($exception instanceof JsonException) {
-            $event->setResponse(new JsonResponse(sprintf('Erreur JSON (code %s) : %s', $exception->getCode(), $this->translator->trans($exception->getMessage(), [], 'json')), Response::HTTP_INTERNAL_SERVER_ERROR));
-        }
-    }
-
-    public function onHttpException(ExceptionEvent $event): void
-    {
-        $exception = $event->getThrowable();
-
-        if (($exception instanceof HttpException) && array_key_exists($exception->getStatusCode(), Response::$statusTexts)) {
-            $event->setResponse(new JsonResponse($this->translator->trans($exception->getStatusCode(), [], 'http'), $exception->getStatusCode()));
-        }
-    }
-
     public function onKernelException(ExceptionEvent $event): void
     {
         $exception = $event->getThrowable();
 
-        $event->setResponse(new JsonResponse($this->translator->trans(Response::HTTP_INTERNAL_SERVER_ERROR), Response::HTTP_INTERNAL_SERVER_ERROR));
+        if ($exception instanceof JsonException) {
+            $event->setResponse(new JsonResponse(sprintf('Erreur JSON : %s', $this->translator->trans($exception->getMessage(), [], 'json')), Response::HTTP_INTERNAL_SERVER_ERROR));
+        } elseif (($exception instanceof HttpException) && array_key_exists($exception->getStatusCode(), Response::$statusTexts)) {
+            $event->setResponse(new JsonResponse($this->translator->trans($exception->getStatusCode(), [], 'http'), $exception->getStatusCode()));
+        } else {
+            $event->setResponse(new JsonResponse($this->translator->trans(Response::HTTP_INTERNAL_SERVER_ERROR, [], 'http'), Response::HTTP_INTERNAL_SERVER_ERROR));
+        }
     }
 
     public static function getSubscribedEvents(): array
     {
         return [
-            KernelEvents::EXCEPTION => [
-                ['onJsonException', 20],
-                ['onHttpException', 10],
-                ['onKernelException', 0],
-            ],
+            KernelEvents::EXCEPTION => 'onKernelException',
         ];
     }
 }

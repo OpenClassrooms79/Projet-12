@@ -16,6 +16,10 @@ class AdviceRepository extends ServiceEntityRepository
         parent::__construct($registry, Advice::class);
     }
 
+    /**
+     * @param int $month
+     * @return array tableau des conseils associés au mois numéro $month (1 à 12)
+     */
     public function getAdvicesByMonth(int $month): array
     {
         return $this
@@ -26,5 +30,24 @@ class AdviceRepository extends ServiceEntityRepository
             ->setParameter('num', $month)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @param Advice $advice
+     * @return array tableau des mois associés au conseil $advice
+     */
+    public function getMonthNames(Advice $advice): array
+    {
+        return array_column(
+            $this
+                ->createQueryBuilder('a')
+                ->select('m.name')
+                ->innerJoin('a.months', 'm')
+                ->where('a.id = :id')
+                ->setParameter('id', $advice->getId())
+                ->getQuery()
+                ->getResult(),
+            'name',
+        );
     }
 }

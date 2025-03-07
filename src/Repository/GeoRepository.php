@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Geo;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use JsonException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function file_get_contents;
@@ -22,6 +23,11 @@ class GeoRepository extends ServiceEntityRepository
         parent::__construct($registry, Geo::class);
     }
 
+    /**
+     * renvoie les coordonnées géographiques de la ville donnée
+     *
+     * @throws JsonException
+     */
     public function getCoordinatesFromCity(string $city): ?Geo
     {
         // vérifier si les infos ne sont pas déjà en cache
