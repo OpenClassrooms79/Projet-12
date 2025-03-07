@@ -36,25 +36,25 @@ class AppFixtures extends Fixture
     {
         $cities = [
             "Paris",
-            "Marseille",
-            "Lyon",
-            "Toulouse",
-            "Nice",
-            "Nantes",
-            "Strasbourg",
-            "Montpellier",
-            "Bordeaux",
-            "Lille",
-            "Rennes",
-            "Reims",
-            "Le Havre",
-            "Saint-Étienne",
-            "Toulon",
-            "Grenoble",
-            "Dijon",
-            "Angers",
-            "Nîmes",
-            "Clermont-Ferrand",
+            "São Paulo",
+            "Baden-Baden",
+            "La Coruña", // La Corogne
+            "الرياض", // Riyad
+            "北京", // Beijing
+            "Hà Nội", // Hanoï
+            "Αθήνα", // Athènes
+            "京都市", // Kyoto
+            "서울", // Seoul
+            "กรุงเทพมหานคร", // Bangkok
+            "Երևան", // Erevan
+            "თბილისი", // Tbilissi
+            "अनन्तपुर", // Anantapur
+            "ວຽງຈັນ", // Vientiane
+            "ကော့သောင်း", // Kawthoung
+            "צפת", // Safed
+            "Шумен", // Choumen
+            "Київ", // Kiev
+            "چابهار", // Chabahar
         ];
         $roles = ['ROLE_USER', 'ROLE_ADMIN'];
 
