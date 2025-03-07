@@ -106,7 +106,11 @@ final class AdviceController extends AbstractController
         if (count($months_array) === 0) {
             return new JsonResponse(
                 [
-                    'message' => 'Veuillez fournir au moins un numéro de mois valide.',
+                    'status' => Response::HTTP_BAD_REQUEST,
+                    'code' => 'invalid_request',
+                    'source' => ['parameter' => 'months'],
+                    'title' => 'Incorrect value',
+                    'detail' => 'Veuillez fournir au moins un numéro de mois valide.',
                 ],
                 Response::HTTP_BAD_REQUEST,
             );
@@ -116,7 +120,11 @@ final class AdviceController extends AbstractController
         if ($detail === '') {
             return new JsonResponse(
                 [
-                    'message' => 'Veuillez fournir un conseil.',
+                    'status' => Response::HTTP_BAD_REQUEST,
+                    'code' => 'invalid_request',
+                    'source' => ['parameter' => 'detail'],
+                    'title' => 'Incorrect value',
+                    'detail' => 'Veuillez fournir un conseil non vide.',
                 ],
                 Response::HTTP_BAD_REQUEST,
             );

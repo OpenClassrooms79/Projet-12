@@ -42,11 +42,12 @@ final class UserController extends AbstractController
         if (!isset($data['login'], $data['password'], $data['city'])) {
             return new JsonResponse(
                 [
-                    'message' => 'Pour créer un nouvel utilisateur, veuillez fournir un login, un mot de passe et une ville.',
-                    'paramètres' => [
-                        'login' => 'string',
-                        'password' => 'string',
-                        'city' => 'string',
+                    'errors' => [
+                        'status' => Response::HTTP_BAD_REQUEST,
+                        'code' => 'invalid_request',
+                        'source' => ['parameter' => ['login', 'password', 'city']],
+                        'title' => 'Paramètre manquant',
+                        'detail' => "Au moins l'un des paramètres est manquant",
                     ],
                 ],
                 Response::HTTP_BAD_REQUEST,
@@ -60,11 +61,12 @@ final class UserController extends AbstractController
         if ($login === '' || $password === '' || $city === '') {
             return new JsonResponse(
                 [
-                    'message' => 'Veuillez fournir un login, un mot de passe et une ville.',
-                    'paramètres' => [
-                        'login' => 'string',
-                        'password' => 'string',
-                        'city' => 'string',
+                    'errors' => [
+                        'status' => Response::HTTP_BAD_REQUEST,
+                        'code' => 'invalid_request',
+                        'source' => ['parameter' => ['login', 'password', 'city']],
+                        'title' => 'Valeur incorrecte',
+                        'detail' => "Aucun des paramètres ne peut avoir une valeur vide",
                     ],
                 ],
                 Response::HTTP_BAD_REQUEST,
@@ -111,10 +113,12 @@ final class UserController extends AbstractController
         if (!isset($data['id'], $data['city'])) {
             return new JsonResponse(
                 [
-                    'message' => 'Au moins un paramètre est manquant.',
-                    'paramètres' => [
-                        'id' => 'int',
-                        'city' => 'string',
+                    'errors' => [
+                        'status' => Response::HTTP_BAD_REQUEST,
+                        'code' => 'invalid_request',
+                        'source' => ['parameter' => ['id', 'city']],
+                        'title' => 'Paramètre manquant',
+                        'detail' => "Au moins l'un des paramètres est manquant",
                     ],
                 ],
                 Response::HTTP_BAD_REQUEST,
@@ -139,8 +143,13 @@ final class UserController extends AbstractController
         if ($city === '') {
             return new JsonResponse(
                 [
-                    'id' => $id,
-                    'message' => 'Veuillez fournir une ville',
+                    'errors' => [
+                        'status' => Response::HTTP_BAD_REQUEST,
+                        'code' => 'invalid_request',
+                        'source' => ['parameter' => 'city'],
+                        'title' => 'Valeur incorrecte',
+                        'detail' => "Le paramètre ne peut avoir une valeur vide",
+                    ],
                 ],
                 Response::HTTP_BAD_REQUEST,
             );
