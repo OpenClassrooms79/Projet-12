@@ -47,7 +47,14 @@ class GeoRepository extends ServiceEntityRepository
                 true,
                 512,
                 JSON_THROW_ON_ERROR,
-            )[0];
+            );
+            if (empty($geo_result)) {
+                // la ville cherchée n'existe pas ou OpenWeatherMap ne la connait pas
+                return null;
+            }
+
+            // on prend le premier résultat
+            $geo_result = $geo_result[0];
 
             // vérifier si les infos ne sont pas déjà en cache avec le nom français récupéré
             if (isset($geo_result['local_names']['fr'])) {
