@@ -56,9 +56,12 @@ class GeoRepository extends ServiceEntityRepository
             // on prend le premier résultat
             $geo_result = $geo_result[0];
 
-            // vérifier si les infos ne sont pas déjà en cache avec le nom français récupéré
             if (isset($geo_result['local_names']['fr'])) {
+                // vérifier si les infos ne sont pas déjà en cache avec le nom français récupéré
                 $geo = $this->findOneBy(['name' => $geo_result['local_names']['fr']]);
+            } else {
+                // vérifier si les infos ne sont pas déjà en cache avec le nom principal
+                $geo = $this->findOneBy(['name' => $geo_result['name']]);
             }
 
             if ($geo === null) {
