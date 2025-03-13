@@ -160,29 +160,10 @@ final class AdviceController extends AbstractController
      * @return JsonResponse
      * @throws JsonException
      */
-    #[Route('/api/conseil', name: 'advice_update', methods: [Request::METHOD_PUT])]
-    public function update(Request $request): JsonResponse
+    #[Route('/api/conseil/{id}', name: 'advice_update', methods: [Request::METHOD_PUT])]
+    public function update(int $id, Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        if (!isset($data['id'])) {
-            return new JsonResponse(
-                [
-                    "errors" => [
-                        [
-                            'status' => Response::HTTP_BAD_REQUEST,
-                            'code' => 'invalid_request',
-                            'source' => ['parameter' => 'id'],
-                            'title' => 'Paramètre manquant',
-                            'detail' => "Le paramètre 'id' est obligatoire.",
-                        ],
-                    ],
-                ],
-                Response::HTTP_BAD_REQUEST,
-            );
-        }
-
         // vérification de l'existence du conseil à mettre à jour
-        $id = $data['id'];
         $advice = $this->adviceRepository->find($id);
         if ($advice === null) {
             return new JsonResponse(
@@ -193,6 +174,8 @@ final class AdviceController extends AbstractController
                 Response::HTTP_NOT_FOUND,
             );
         }
+
+        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
         $months_names = null;
         $missing = [];

@@ -105,30 +105,10 @@ final class UserController extends AbstractController
      * @return JsonResponse
      * @throws JsonException
      */
-    #[Route('/api/user', name: 'user_update', requirements: ['month' => Requirement::POSITIVE_INT], methods: [Request::METHOD_PUT])]
-    public function update(Request $request): JsonResponse
+    #[Route('/api/user/{id}', name: 'user_update', requirements: ['month' => Requirement::POSITIVE_INT], methods: [Request::METHOD_PUT])]
+    public function update(int $id, Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
-
-        if (!isset($data['id'], $data['city'])) {
-            return new JsonResponse(
-                [
-                    'errors' => [
-                        'status' => Response::HTTP_BAD_REQUEST,
-                        'code' => 'invalid_request',
-                        'source' => ['parameter' => ['id', 'city']],
-                        'title' => 'Paramètre manquant',
-                        'detail' => "Au moins l'un des paramètres est manquant",
-                    ],
-                ],
-                Response::HTTP_BAD_REQUEST,
-            );
-        }
-        $id = (int) $data['id'];
-        $city = $data['city'];
-
         $user = $this->userRepository->find($id);
-
         if ($user === null) {
             return new JsonResponse(
                 [
@@ -138,6 +118,24 @@ final class UserController extends AbstractController
                 Response::HTTP_NOT_FOUND,
             );
         }
+
+        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        if (!isset($data['city'])) {
+            return new JsonResponse(
+                [
+                    'errors' => [
+                        'status' => Response::HTTP_BAD_REQUEST,
+                        'code' => 'invalid_request',
+                        'source' => ['parameter' => ['city']],
+                        'title' => 'Paramètre manquant',
+                        'detail' => "Au moins l'un des paramètres est manquant",
+                    ],
+                ],
+                Response::HTTP_BAD_REQUEST,
+            );
+        }
+        $city = $data['city'];
 
         $city = mb_trim($city);
         if ($city === '') {
